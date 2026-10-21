@@ -1,0 +1,21 @@
+# Core Deep Learning Framework
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+
+# Data Processing & Remote Sensing
+numpy
+scipy
+rasterio
+tifffile
+shapely
+opencv-python
+scikit-learn
+
+# Visualization & Logging
+matplotlib
+tqdm
+
+# Utilities & Web Interface
+requests
+flask

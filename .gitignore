@@ -1,0 +1,17 @@
+# Environment
+.venv/
+__pycache__/
+*.pyc
+
+# Data & Checkpoints
+data/images/*.tif
+data/geojson/*.geojson
+data/masks/*.png
+checkpoints/*.pth
+
+# Logs & Temp
+logs/*
+outputs/baseline_preds/*
+outputs/finetuned_preds/*
+outputs/comparison/*
+author_notebook.ipynb
