@@ -1,0 +1,112 @@
+[
+  {
+    "tile_id": "img1400",
+    "full_id": "AOI_3_Paris_img1400",
+    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img1400.tif",
+    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img1400.geojson",
+    "mask_path": "data/masks\\img1400.png",
+    "building_count": 69,
+    "building_pixels": 101733,
+    "density_pct": 24.08,
+    "leakage_audit": "VERIFIED_UNTOUCHED_HOLDOUT"
+  },
+  {
+    "tile_id": "img1684",
+    "full_id": "AOI_3_Paris_img1684",
+    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img1684.tif",
+    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img1684.geojson",
+    "mask_path": "data/masks\\img1684.png",
+    "building_count": 64,
+    "building_pixels": 82891,
+    "density_pct": 19.62,
+    "leakage_audit": "VERIFIED_UNTOUCHED_HOLDOUT"
+  },
+  {
+    "tile_id": "img1730",
+    "full_id": "AOI_3_Paris_img1730",
+    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img1730.tif",
+    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img1730.geojson",
+    "mask_path": "data/masks\\img1730.png",
+    "building_count": 73,
+    "building_pixels": 96757,
+    "density_pct": 22.9,
+    "leakage_audit": "VERIFIED_UNTOUCHED_HOLDOUT"
+  },
+  {
+    "tile_id": "img384",
+    "full_id": "AOI_3_Paris_img384",
+    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img384.tif",
+    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img384.geojson",
+    "mask_path": "data/masks\\img384.png",
+    "building_count": 61,
+    "building_pixels": 86788,
+    "density_pct": 20.54,
+    "leakage_audit": "VERIFIED_UNTOUCHED_HOLDOUT"
+  },
+  {
+    "tile_id": "img449",
+    "full_id": "AOI_3_Paris_img449",
+    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img449.tif",
+    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img449.geojson",
+    "mask_path": "data/masks\\img449.png",
+    "building_count": 61,
+    "building_pixels": 108087,
+    "density_pct": 25.58,
+    "leakage_audit": "VERIFIED_UNTOUCHED_HOLDOUT"
+  },
+  {
+    "tile_id": "img551",
+    "full_id": "AOI_3_Paris_img551",
+    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img551.tif",
+    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img551.geojson",
+    "mask_path": "data/masks\\img551.png",
+    "building_count": 65,
+    "building_pixels": 83538,
+    "density_pct": 19.77,
+    "leakage_audit": "VERIFIED_UNTOUCHED_HOLDOUT"
+  },
+  {
+    "tile_id": "img560",
+    "full_id": "AOI_3_Paris_img560",
+    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img560.tif",
+    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img560.geojson",
+    "mask_path": "data/masks\\img560.png",
+    "building_count": 61,
+    "building_pixels": 91871,
+    "density_pct": 21.74,
+    "leakage_audit": "VERIFIED_UNTOUCHED_HOLDOUT"
+  },
+  {
+    "tile_id": "img691",
+    "full_id": "AOI_3_Paris_img691",
+    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img691.tif",
+    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img691.geojson",
+    "mask_path": "data/masks\\img691.png",
+    "building_count": 74,
+    "building_pixels": 83508,
+    "density_pct": 19.77,
+    "leakage_audit": "VERIFIED_UNTOUCHED_HOLDOUT"
+  },
+  {
+    "tile_id": "img699",
+    "full_id": "AOI_3_Paris_img699",
+    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img699.tif",
+    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img699.geojson",
+    "mask_path": "data/masks\\img699.png",
+    "building_count": 64,
+    "building_pixels": 78936,
+    "density_pct": 18.68,
+    "leakage_audit": "VERIFIED_UNTOUCHED_HOLDOUT"
+  },
+  {
+    "tile_id": "img781",
+    "full_id": "AOI_3_Paris_img781",
+    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img781.tif",
+    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img781.geojson",
+    "mask_path": "data/masks\\img781.png",
+    "building_count": 61,
+    "building_pixels": 75813,
+    "density_pct": 17.94,
+    "leakage_audit": "VERIFIED_UNTOUCHED_HOLDOUT"
+  }
+]

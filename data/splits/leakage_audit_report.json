@@ -1,0 +1,61 @@
+{
+  "status": "ZERO_LEAKAGE_VERIFIED",
+  "random_state": 42,
+  "counts": {
+    "train": 15,
+    "val": 6,
+    "test": 10,
+    "total": 31
+  },
+  "building_counts": {
+    "train": 1021,
+    "val": 354,
+    "test": 653,
+    "total": 2028
+  },
+  "building_pixels": {
+    "train": 1336486,
+    "val": 521445,
+    "test": 889922,
+    "total": 2747853
+  },
+  "tile_ids": {
+    "train": [
+      "AOI_3_Paris_img1312",
+      "AOI_3_Paris_img136",
+      "AOI_3_Paris_img1402",
+      "AOI_3_Paris_img1456",
+      "AOI_3_Paris_img280",
+      "AOI_3_Paris_img484",
+      "AOI_3_Paris_img516",
+      "AOI_3_Paris_img690",
+      "AOI_3_Paris_img697",
+      "AOI_3_Paris_img731",
+      "AOI_3_Paris_img735",
+      "AOI_3_Paris_img785",
+      "AOI_3_Paris_img905",
+      "AOI_3_Paris_img960",
+      "AOI_3_Paris_img961"
+    ],
+    "val": [
+      "AOI_3_Paris_img100",
+      "AOI_3_Paris_img1223",
+      "AOI_3_Paris_img1404",
+      "AOI_3_Paris_img305",
+      "AOI_3_Paris_img741",
+      "AOI_3_Paris_img876"
+    ],
+    "test": [
+      "AOI_3_Paris_img1400",
+      "AOI_3_Paris_img1684",
+      "AOI_3_Paris_img1730",
+      "AOI_3_Paris_img384",
+      "AOI_3_Paris_img449",
+      "AOI_3_Paris_img551",
+      "AOI_3_Paris_img560",
+      "AOI_3_Paris_img691",
+      "AOI_3_Paris_img699",
+      "AOI_3_Paris_img781"
+    ]
+  }
+}
