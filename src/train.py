@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 import argparse
 import json
 import time
+import numpy as np
 import matplotlib.pyplot as plt
 import torch
 from torch.optim import Adam
@@ -55,7 +56,7 @@ def train_model(
     if device.type == "cuda":
         print(f"  GPU Name:          {torch.cuda.get_device_name(0)}")
         print(f"  VRAM Available:    {torch.cuda.get_device_properties(0).total_memory / (1024**3):.2f} GB")
-        scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
+        scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
         print(f"  Mixed Precision:   {'Enabled (AMP FP16)' if use_amp else 'Disabled'}")
     else:
         scaler = None
@@ -78,7 +79,7 @@ def train_model(
     # 4. Optimizer, Loss & Scheduler
     criterion = BCEDiceLoss(bce_weight=0.5, dice_weight=0.5)
     optimizer = Adam(model.parameters(), lr=lr, weight_decay=1e-4)
-    scheduler = ReduceLROnPlateau(optimizer, mode="max", factor=0.5, patience=3, verbose=True)
+    scheduler = ReduceLROnPlateau(optimizer, mode="max", factor=0.5, patience=3)
 
     history = {
         "train_loss": [],
@@ -105,7 +106,7 @@ def train_model(
             optimizer.zero_grad()
 
             if device.type == "cuda" and use_amp:
-                with torch.cuda.amp.autocast():
+                with torch.amp.autocast("cuda"):
                     outputs = model(imgs)
                     loss = criterion(outputs, masks)
                 scaler.scale(loss).backward()
@@ -132,8 +133,9 @@ def train_model(
                 imgs = imgs.to(device)
                 masks = masks.to(device)
 
-                outputs = model(imgs)
-                loss = criterion(outputs, masks)
+                with torch.amp.autocast("cuda", enabled=(device.type == "cuda" and use_amp)):
+                    outputs = model(imgs)
+                    loss = criterion(outputs, masks)
                 running_val_loss += loss.item()
 
                 probs = torch.sigmoid(outputs)

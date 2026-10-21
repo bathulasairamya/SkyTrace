@@ -65,6 +65,7 @@ def index():
         device_name=str(DEVICE).upper(),
         cuda_available=torch.cuda.is_available(),
         sample_images=sample_images,
+        has_finetuned=os.path.exists("checkpoints/best_finetuned_model.pth"),
     )
 
 
@@ -137,6 +138,7 @@ def predict():
                 "dimensions": f"{raw_rgb.shape[1]} x {raw_rgb.shape[0]} px",
                 "device_used": str(DEVICE).upper(),
                 "threshold_used": threshold,
+                "max_confidence": round(float(prob_map.max()) * 100, 1),
             },
             "images": {
                 "satellite_rgb": array_to_base64_png(rgb_disp_uint8, is_rgb=True),

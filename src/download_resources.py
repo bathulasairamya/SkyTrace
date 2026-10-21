@@ -55,7 +55,7 @@ def download_file(url: str, dest_path: str, desc: str = None):
         return False
 
 
-def get_tile_selection(solutions_csv: str, n_train: int = 20, n_test: int = 10):
+def get_tile_selection(solutions_csv: str, n_train: int = 21, n_test: int = 10):
     """Select high-density building tiles strictly partitioned to prevent data leakage."""
     image_counts = Counter()
     with open(solutions_csv, mode="r", encoding="utf-8") as f:
@@ -80,7 +80,7 @@ def get_tile_selection(solutions_csv: str, n_train: int = 20, n_test: int = 10):
     return selected_train, selected_test
 
 
-def download_dataset(solutions_csv: str = "data/solutions.csv", n_train: int = 20, n_test: int = 10):
+def download_dataset(solutions_csv: str = "data/solutions.csv", n_train: int = 21, n_test: int = 10):
     """Download satellite tiles and geojson annotations for selected train and test sets."""
     os.makedirs("data/images", exist_ok=True)
     os.makedirs("data/geojson", exist_ok=True)
@@ -168,7 +168,7 @@ def main():
 
     # 2. Download Selected SpaceNet-2 Paris Tiles
     print("\n--- Step 2: Downloading Curated SpaceNet-2 Paris Dataset ---")
-    download_dataset(solutions_csv="data/solutions.csv", n_train=20, n_test=10)
+    download_dataset(solutions_csv="data/solutions.csv", n_train=21, n_test=10)
 
     # 3. Generate Binary Masks
     print("\n--- Step 3: Generating Binary Raster Masks from GeoJSON ---")

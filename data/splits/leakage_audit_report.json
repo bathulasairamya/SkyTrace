@@ -8,42 +8,42 @@
     "total": 31
   },
   "building_counts": {
-    "train": 1021,
-    "val": 354,
+    "train": 997,
+    "val": 413,
     "test": 653,
-    "total": 2028
+    "total": 2063
   },
   "building_pixels": {
-    "train": 1336486,
-    "val": 521445,
+    "train": 1333907,
+    "val": 568499,
     "test": 889922,
-    "total": 2747853
+    "total": 2792328
   },
   "tile_ids": {
     "train": [
-      "AOI_3_Paris_img1312",
       "AOI_3_Paris_img136",
       "AOI_3_Paris_img1402",
-      "AOI_3_Paris_img1456",
+      "AOI_3_Paris_img1404",
       "AOI_3_Paris_img280",
-      "AOI_3_Paris_img484",
+      "AOI_3_Paris_img305",
       "AOI_3_Paris_img516",
       "AOI_3_Paris_img690",
       "AOI_3_Paris_img697",
       "AOI_3_Paris_img731",
       "AOI_3_Paris_img735",
-      "AOI_3_Paris_img785",
-      "AOI_3_Paris_img905",
+      "AOI_3_Paris_img741",
+      "AOI_3_Paris_img876",
+      "AOI_3_Paris_img914",
       "AOI_3_Paris_img960",
       "AOI_3_Paris_img961"
     ],
     "val": [
-      "AOI_3_Paris_img100",
       "AOI_3_Paris_img1223",
-      "AOI_3_Paris_img1404",
-      "AOI_3_Paris_img305",
-      "AOI_3_Paris_img741",
-      "AOI_3_Paris_img876"
+      "AOI_3_Paris_img1312",
+      "AOI_3_Paris_img1456",
+      "AOI_3_Paris_img484",
+      "AOI_3_Paris_img785",
+      "AOI_3_Paris_img905"
     ],
     "test": [
       "AOI_3_Paris_img1400",
