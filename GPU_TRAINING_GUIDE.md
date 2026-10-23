@@ -51,11 +51,15 @@ Open `http://localhost:5000` in your browser.
 
 ## 2. Running for Free on Google Colab (Cloud GPU)
 
-If your other system does not have an NVIDIA GPU, you can run on Google Colab's free **NVIDIA T4 GPU**:
+A ready-to-run notebook **`train_gpu.ipynb`** is included directly in the repository!
 
-1. Go to [Google Colab](https://colab.research.google.com/) and create a new notebook.
-2. Select **Runtime** > **Change runtime type** > Hardware accelerator: **T4 GPU**.
-3. Run the following cells:
+### Option A: Open `train_gpu.ipynb` directly
+1. Go to [Google Colab](https://colab.research.google.com/) and choose **Upload** > upload `train_gpu.ipynb` (or open from GitHub: `bathulasairamya/SkyTrace`).
+2. Set Runtime to **T4 GPU** (`Runtime` > `Change runtime type` > `T4 GPU`).
+3. Click `Runtime` > `Run all`.
+
+### Option B: Run in a fresh Colab notebook
+If creating a blank notebook, select **Runtime** > **Change runtime type** > **T4 GPU**, then paste and run:
 
 ```python
 # Cell 1: Clone repo

@@ -162,9 +162,10 @@ def main():
     os.makedirs("checkpoints", exist_ok=True)
     os.makedirs("data", exist_ok=True)
 
-    # 1. Download Pretrained Checkpoint (DeepLabV3+)
-    print("\n--- Step 1: Downloading Pretrained Checkpoint (Abhatta7/building-footprint-segmentation) ---")
+    # 1. Download Pretrained Checkpoints
+    print("\n--- Step 1: Downloading Pretrained Checkpoints (Abhatta7/building-footprint-segmentation) ---")
     download_file(CHECKPOINTS["best_deeplab.pth"], "checkpoints/best_deeplab.pth", desc="best_deeplab.pth")
+    download_file(CHECKPOINTS["best_unet.pth"], "checkpoints/best_unet.pth", desc="best_unet.pth")
 
     # 2. Download Selected SpaceNet-2 Paris Tiles
     print("\n--- Step 2: Downloading Curated SpaceNet-2 Paris Dataset ---")
