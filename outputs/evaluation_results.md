@@ -7,12 +7,12 @@
 
 | Metric | Pretrained Baseline (`best_deeplab.pth`) | Fine-Tuned Model (`best_finetuned_model.pth`) | Delta Change |
 |---|:---:|:---:|:---:|
-| **Mean IoU (Jaccard)** | **0.7123** | **0.7117** | **-0.0006** |
-| **Mean Dice (F1)** | 0.8316 | 0.8313 | -0.0003 |
-| **Precision** | 0.8225 | 0.8390 | +0.0165 |
-| **Recall** | 0.8418 | 0.8253 | -0.0164 |
-| **Pixel Accuracy** | 0.9280 | 0.9295 | +0.0015 |
-| **SpaceNet Object F1** | 0.6431 | 0.6120 | -0.0311 |
+| **Mean IoU (Jaccard)** | **0.7123** | **0.7132** | **+0.0009** |
+| **Mean Dice (F1)** | 0.8316 | 0.8323 | +0.0007 |
+| **Precision** | 0.8225 | 0.8378 | +0.0152 |
+| **Recall** | 0.8418 | 0.8286 | -0.0132 |
+| **Pixel Accuracy** | 0.9280 | 0.9296 | +0.0016 |
+| **SpaceNet Object F1** | 0.6431 | 0.6350 | -0.0081 |
 
 ---
 

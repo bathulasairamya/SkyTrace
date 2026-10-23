@@ -15,7 +15,13 @@ from flask import Flask, render_template, request, jsonify
 from PIL import Image
 
 from src.models import build_model
-from src.inference import load_inference_image, predict_sliding_window, extract_contours_and_overlay
+from src.inference import (
+    load_inference_image,
+    predict_sliding_window,
+    predict_sliding_window_tta,
+    extract_contours_and_overlay,
+    contours_to_geojson,
+)
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
@@ -74,6 +80,7 @@ def predict():
     try:
         model_choice = request.form.get("model_choice", "pretrained")
         threshold = float(request.form.get("threshold", 0.5))
+        use_tta = request.form.get("use_tta", "false").lower() in ["true", "1", "yes"]
         sample_id = request.form.get("sample_id", "")
 
         temp_path = "temp_upload.tif"
@@ -95,22 +102,37 @@ def predict():
         # Run inference
         raw_rgb, norm_rgb = load_inference_image(img_path)
         model = get_loaded_model(model_choice)
-        prob_map, binary_mask = predict_sliding_window(
-            model=model,
-            img_norm=norm_rgb,
-            patch_size=512,
-            stride=256,
-            device=DEVICE,
-            threshold=threshold,
-        )
+        
+        if use_tta:
+            prob_map, binary_mask = predict_sliding_window_tta(
+                model=model,
+                img_norm=norm_rgb,
+                patch_size=512,
+                stride=256,
+                device=DEVICE,
+                threshold=threshold,
+            )
+        else:
+            prob_map, binary_mask = predict_sliding_window(
+                model=model,
+                img_norm=norm_rgb,
+                patch_size=512,
+                stride=256,
+                device=DEVICE,
+                threshold=threshold,
+            )
 
-        # Extract contours and create visual overlay
+        # Extract contours with morphological filtering & Douglas-Peucker simplification
         overlay, contours = extract_contours_and_overlay(
             rgb_img=raw_rgb,
             binary_mask=binary_mask,
             contour_color=(0, 230, 255),  # Cyan
             min_area=15,
+            simplify_epsilon=1.5,
         )
+
+        # Generate GIS GeoJSON
+        geojson_data = contours_to_geojson(contours, raw_rgb.shape[1], raw_rgb.shape[0])
 
         # Compute telemetry statistics
         building_count = len(contours)
@@ -138,6 +160,7 @@ def predict():
                 "dimensions": f"{raw_rgb.shape[1]} x {raw_rgb.shape[0]} px",
                 "device_used": str(DEVICE).upper(),
                 "threshold_used": threshold,
+                "tta_enabled": use_tta,
                 "max_confidence": round(float(prob_map.max()) * 100, 1),
             },
             "images": {
@@ -145,6 +168,7 @@ def predict():
                 "binary_mask": array_to_base64_png(binary_mask, is_rgb=False),
                 "contour_overlay": array_to_base64_png(overlay, is_rgb=True),
             },
+            "geojson": geojson_data,
         })
 
     except Exception as e:
