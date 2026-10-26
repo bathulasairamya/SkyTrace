@@ -490,8 +490,20 @@
           <input type="range" id="threshold" min="0.1" max="0.9" step="0.05" value="0.5" oninput="document.getElementById('threshVal').innerText = parseFloat(this.value).toFixed(2)">
         </div>
 
+        <div class="form-group" style="display:flex; align-items:center; justify-content:space-between; margin-top:14px; background:rgba(255,255,255,0.03); padding:10px 14px; border-radius:10px; border:1px solid var(--card-border);">
+          <div>
+            <span class="form-label" style="margin:0; font-weight:600;">High Accuracy Mode (TTA)</span>
+            <span style="font-size:11px; color:var(--text-muted); display:block;">4-way flip & rotate ensemble</span>
+          </div>
+          <input type="checkbox" id="useTta" style="width:18px; height:18px; accent-color:var(--accent-cyan); cursor:pointer;">
+        </div>
+
         <button class="btn-run" id="btnRun" onclick="runInference()">
           <span>Run Footprint Extraction</span> ⚡
+        </button>
+
+        <button id="btnDownloadGeoJson" onclick="downloadGeoJson()" style="display:none; width:100%; margin-top:10px; padding:12px; border-radius:12px; background:rgba(16, 185, 129, 0.15); border:1px solid rgba(16, 185, 129, 0.4); color:#34d399; font-family:inherit; font-weight:700; font-size:14px; cursor:pointer; transition:all 0.2s;">
+          <span>Export Vector Polygons (.geojson)</span> 🗺️
         </button>
       </div>
 
@@ -553,6 +565,7 @@
   <script>
     let currentFile = null;
     let selectedSample = "";
+    let lastGeoJson = null;
 
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
@@ -589,6 +602,17 @@
       runInference();
     }
 
+    function downloadGeoJson() {
+      if (!lastGeoJson) return;
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(lastGeoJson, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `skytrace_buildings_${selectedSample || 'upload'}.geojson`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
     async function runInference() {
       if (!currentFile && !selectedSample) {
         alert("Please upload a satellite image or choose a pre-loaded SpaceNet tile!");
@@ -607,6 +631,7 @@
 
       formData.append('model_choice', document.getElementById('modelChoice').value);
       formData.append('threshold', document.getElementById('threshold').value);
+      formData.append('use_tta', document.getElementById('useTta').checked ? 'true' : 'false');
 
       try {
         const resp = await fetch('/api/predict', {
@@ -616,6 +641,8 @@
 
         const data = await resp.json();
         if (data.status === 'success') {
+          lastGeoJson = data.geojson;
+
           // Update HUD
           document.getElementById('hudCount').innerText = data.telemetry.building_count;
           document.getElementById('hudArea').innerHTML = data.telemetry.estimated_area_sqm.toLocaleString() + ' <span>m²</span>';
@@ -627,6 +654,14 @@
           document.getElementById('wrapRgb').innerHTML = `<img src="${data.images.satellite_rgb}" alt="Satellite RGB">`;
           document.getElementById('wrapMask').innerHTML = `<img src="${data.images.binary_mask}" alt="Binary Mask">`;
           document.getElementById('wrapOverlay').innerHTML = `<img src="${data.images.contour_overlay}" alt="Footprints Overlay">`;
+
+          // Show GeoJSON Download Button
+          const btnGeo = document.getElementById('btnDownloadGeoJson');
+          if (data.telemetry.building_count > 0 && lastGeoJson) {
+            btnGeo.style.display = 'block';
+          } else {
+            btnGeo.style.display = 'none';
+          }
 
           // Informative banner for 0 buildings
           const notice = document.getElementById('detectionNotice');
