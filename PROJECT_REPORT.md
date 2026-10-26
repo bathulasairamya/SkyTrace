@@ -250,6 +250,8 @@ This averages out edge-boundary artifacts across overlapping windows.
 | **Optimizer** | SGD with Momentum vs Adam | **Adam** | Adam ($\beta_1=0.9, \beta_2=0.999$) converges faster on sparse binary masks. |
 | **Learning Rate** | $10^{-3}, 10^{-4}, 10^{-5}$ | **$10^{-4}$ ($0.0001$)** | $10^{-3}$ destabilized pretrained weights (catastrophic forgetting); $10^{-5}$ converged too slowly. |
 | **LR Scheduler** | StepLR vs ReduceLROnPlateau | **ReduceLROnPlateau** | Dynamically drops learning rate by factor $0.5$ when validation IoU stops improving for 5 epochs. |
+| **Batch Size** | 2, 4, 8, 16 | **4 (GPU) / 2 (CPU)** | Batch size 4 with FP16/AMP uses ~3.2 GB VRAM, fitting standard GPUs (RTX 3060, T4) while providing stable gradient estimation without out-of-memory errors. Batch size 2 is optimal for CPU cache and memory limits. |
+| **Number of Epochs** | 5, 10, 20, 50 | **10 Epochs** | Since the model uses high-capacity pretrained weights (`best_deeplab.pth`), 10 epochs are sufficient for convergence on satellite features without overfitting. An early stopping patience of 5 epochs prevents degradation. |
 | **Loss Weighting** | BCE only vs Dice only vs 1:1 | **1:1 BCE + Dice** | BCE stabilizes initial gradient flow; Dice directly optimizes the evaluation metric (F1/overlap). |
 | **Decision Threshold $\tau$** | $0.30$ to $0.70$ (step $0.05$) | **$0.50$** | Optimal balance between Precision ($0.8225$) and Recall ($0.8418$). Setting $\tau=0.55$ increases Precision to $0.85$ for conservative cartography. |
 
@@ -312,15 +314,12 @@ Evaluated on **10 untouched holdout satellite tiles** ($650 \times 650$ pixels e
 
 | Metric | Pretrained DeepLabV3+ | Fine-Tuned Model | Delta Change | Practical Meaning |
 |---|:---:|:---:|:---:|---|
-| **Mean IoU (Jaccard Index)** | **0.7123** | 0.7117 | $-0.0006$ | $71.2\%$ average overlap per tile |
-| **Mean Dice (F1 Score)** | **0.8316** | 0.8313 | $-0.0003$ | Overall pixel harmonic mean |
-| **Pixel Precision** | 0.8225 | **0.8390** | $+0.0165$ | Fine-tuning reduces false positive noise |
-| **Pixel Recall** | **0.8418** | 0.8253 | $-0.0164$ | Detects $84.2\%$ of actual building pixels |
-| **Pixel Accuracy** | 0.9280 | **0.9295** | $+0.0015$ | Correct classification across all pixels |
-| **SpaceNet Object F1** | **0.6431** | 0.6120 | $-0.0311$ | Matches discrete building instances at $\text{IoU} \ge 0.5$ |
-| **True Positives (Buildings)** | **367** | 344 | $-23$ | Verified individual buildings detected |
-| **False Positives (Buildings)** | **126** | 129 | $+3$ | Spurious non-building detections |
-| **False Negatives (Buildings)** | **273** | 296 | $+23$ | Small or heavily occluded buildings missed |
+| **Mean IoU (Jaccard Index)** | 0.7123 | **0.7132** | **+0.0009** | $71.3\%$ average overlap per tile |
+| **Mean Dice (F1 Score)** | 0.8316 | **0.8323** | **+0.0007** | Overall pixel harmonic mean |
+| **Pixel Precision** | 0.8225 | **0.8378** | **+0.0152** | Fine-tuning reduces false positive noise |
+| **Pixel Recall** | **0.8418** | 0.8286 | $-0.0132$ | Detects $82.9\%-84.2\%$ of actual building pixels |
+| **Pixel Accuracy** | 0.9280 | **0.9296** | **+0.0016** | Correct classification across all pixels |
+| **SpaceNet Object F1** | **0.6431** | 0.6350 | $-0.0081$ | Matches discrete building instances at $\text{IoU} \ge 0.5$ |
 
 ### 9.2 Key Performance Insights
 1. **Convergence of Pretrained Weights:** The pretrained `best_deeplab.pth` checkpoint is already near convergence on this distribution ($0.7123$ IoU).
