@@ -1,167 +1,272 @@
 [
   {
-    "tile_id": "img697",
-    "full_id": "AOI_3_Paris_img697",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img697.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img697.geojson",
-    "mask_path": "data/masks\\img697.png",
-    "building_count": 64,
-    "building_pixels": 76583,
-    "density_pct": 18.13,
-    "leakage_audit": "ORIGINAL_TRAIN_POOL"
-  },
-  {
-    "tile_id": "img1402",
-    "full_id": "AOI_3_Paris_img1402",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img1402.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img1402.geojson",
-    "mask_path": "data/masks\\img1402.png",
-    "building_count": 66,
-    "building_pixels": 98654,
-    "density_pct": 23.35,
-    "leakage_audit": "ORIGINAL_TRAIN_POOL"
-  },
-  {
-    "tile_id": "img914",
-    "full_id": "AOI_3_Paris_img914",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img914.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img914.geojson",
-    "mask_path": "data/masks\\img914.png",
-    "building_count": 62,
-    "building_pixels": 86047,
-    "density_pct": 20.37,
-    "leakage_audit": "ORIGINAL_TRAIN_POOL"
-  },
-  {
-    "tile_id": "img876",
-    "full_id": "AOI_3_Paris_img876",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img876.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img876.geojson",
-    "mask_path": "data/masks\\img876.png",
-    "building_count": 62,
-    "building_pixels": 84853,
-    "density_pct": 20.08,
-    "leakage_audit": "ORIGINAL_TRAIN_POOL"
-  },
-  {
-    "tile_id": "img735",
-    "full_id": "AOI_3_Paris_img735",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img735.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img735.geojson",
-    "mask_path": "data/masks\\img735.png",
-    "building_count": 69,
-    "building_pixels": 90888,
-    "density_pct": 21.51,
-    "leakage_audit": "ORIGINAL_TRAIN_POOL"
-  },
-  {
-    "tile_id": "img136",
-    "full_id": "AOI_3_Paris_img136",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img136.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img136.geojson",
-    "mask_path": "data/masks\\img136.png",
-    "building_count": 66,
-    "building_pixels": 69941,
-    "density_pct": 16.55,
-    "leakage_audit": "ORIGINAL_TRAIN_POOL"
-  },
-  {
-    "tile_id": "img516",
-    "full_id": "AOI_3_Paris_img516",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img516.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img516.geojson",
-    "mask_path": "data/masks\\img516.png",
-    "building_count": 82,
-    "building_pixels": 98215,
-    "density_pct": 23.25,
-    "leakage_audit": "ORIGINAL_TRAIN_POOL"
-  },
-  {
-    "tile_id": "img961",
-    "full_id": "AOI_3_Paris_img961",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img961.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img961.geojson",
-    "mask_path": "data/masks\\img961.png",
-    "building_count": 66,
-    "building_pixels": 71832,
-    "density_pct": 17.0,
-    "leakage_audit": "ORIGINAL_TRAIN_POOL"
-  },
-  {
-    "tile_id": "img1404",
-    "full_id": "AOI_3_Paris_img1404",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img1404.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img1404.geojson",
-    "mask_path": "data/masks\\img1404.png",
-    "building_count": 66,
-    "building_pixels": 98625,
-    "density_pct": 23.34,
-    "leakage_audit": "ORIGINAL_TRAIN_POOL"
-  },
-  {
-    "tile_id": "img731",
-    "full_id": "AOI_3_Paris_img731",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img731.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img731.geojson",
-    "mask_path": "data/masks\\img731.png",
-    "building_count": 62,
-    "building_pixels": 105700,
-    "density_pct": 25.02,
-    "leakage_audit": "ORIGINAL_TRAIN_POOL"
-  },
-  {
-    "tile_id": "img305",
-    "full_id": "AOI_3_Paris_img305",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img305.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img305.geojson",
-    "mask_path": "data/masks\\img305.png",
-    "building_count": 67,
-    "building_pixels": 113642,
-    "density_pct": 26.9,
-    "leakage_audit": "ORIGINAL_TRAIN_POOL"
-  },
-  {
-    "tile_id": "img690",
-    "full_id": "AOI_3_Paris_img690",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img690.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img690.geojson",
-    "mask_path": "data/masks\\img690.png",
+    "tile_id": "img1312",
+    "full_id": "AOI_3_Paris_img1312",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img1312.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img1312.geojson",
+    "mask_path": "data/masks/img1312.png",
     "building_count": 63,
-    "building_pixels": 82615,
-    "density_pct": 19.55,
-    "leakage_audit": "ORIGINAL_TRAIN_POOL"
-  },
-  {
-    "tile_id": "img741",
-    "full_id": "AOI_3_Paris_img741",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img741.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img741.geojson",
-    "mask_path": "data/masks\\img741.png",
-    "building_count": 67,
-    "building_pixels": 87464,
-    "density_pct": 20.7,
+    "building_pixels": 102795,
+    "density_pct": 24.33,
+    "bounds": [
+      2.27591639993,
+      48.9862809,
+      2.27767139993,
+      48.9880359
+    ],
+    "crs": "EPSG:4326",
     "leakage_audit": "ORIGINAL_TRAIN_POOL"
   },
   {
     "tile_id": "img960",
     "full_id": "AOI_3_Paris_img960",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img960.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img960.geojson",
-    "mask_path": "data/masks\\img960.png",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img960.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img960.geojson",
+    "mask_path": "data/masks/img960.png",
     "building_count": 65,
     "building_pixels": 84143,
     "density_pct": 19.92,
+    "bounds": [
+      2.26187639994,
+      48.9950559,
+      2.26363139994,
+      48.9968109
+    ],
+    "crs": "EPSG:4326",
+    "leakage_audit": "ORIGINAL_TRAIN_POOL"
+  },
+  {
+    "tile_id": "img731",
+    "full_id": "AOI_3_Paris_img731",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img731.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img731.geojson",
+    "mask_path": "data/masks/img731.png",
+    "building_count": 62,
+    "building_pixels": 105700,
+    "density_pct": 25.02,
+    "bounds": [
+      2.25310139994,
+      48.9915459,
+      2.25485639994,
+      48.9933009
+    ],
+    "crs": "EPSG:4326",
+    "leakage_audit": "ORIGINAL_TRAIN_POOL"
+  },
+  {
+    "tile_id": "img1223",
+    "full_id": "AOI_3_Paris_img1223",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img1223.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img1223.geojson",
+    "mask_path": "data/masks/img1223.png",
+    "building_count": 65,
+    "building_pixels": 95289,
+    "density_pct": 22.55,
+    "bounds": [
+      2.27240639994,
+      48.9880359,
+      2.27416139993,
+      48.9897909
+    ],
+    "crs": "EPSG:4326",
+    "leakage_audit": "ORIGINAL_TRAIN_POOL"
+  },
+  {
+    "tile_id": "img735",
+    "full_id": "AOI_3_Paris_img735",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img735.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img735.geojson",
+    "mask_path": "data/masks/img735.png",
+    "building_count": 69,
+    "building_pixels": 90888,
+    "density_pct": 21.51,
+    "bounds": [
+      2.25310139994,
+      48.9985659,
+      2.25485639994,
+      49.0003209
+    ],
+    "crs": "EPSG:4326",
+    "leakage_audit": "ORIGINAL_TRAIN_POOL"
+  },
+  {
+    "tile_id": "img1456",
+    "full_id": "AOI_3_Paris_img1456",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img1456.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img1456.geojson",
+    "mask_path": "data/masks/img1456.png",
+    "building_count": 69,
+    "building_pixels": 88779,
+    "density_pct": 21.01,
+    "bounds": [
+      2.28118139993,
+      48.9968109,
+      2.28293639993,
+      48.9985659
+    ],
+    "crs": "EPSG:4326",
     "leakage_audit": "ORIGINAL_TRAIN_POOL"
   },
   {
     "tile_id": "img280",
     "full_id": "AOI_3_Paris_img280",
-    "image_path": "data/images\\SN2_buildings_train_AOI_3_Paris_PS-RGB_img280.tif",
-    "geojson_path": "data/geojson\\SN2_buildings_train_AOI_3_Paris_geojson_buildings_img280.geojson",
-    "mask_path": "data/masks\\img280.png",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img280.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img280.geojson",
+    "mask_path": "data/masks/img280.png",
     "building_count": 70,
     "building_pixels": 84705,
     "density_pct": 20.05,
+    "bounds": [
+      2.23028639995,
+      49.0213809,
+      2.23204139995,
+      49.0231359
+    ],
+    "crs": "EPSG:4326",
+    "leakage_audit": "ORIGINAL_TRAIN_POOL"
+  },
+  {
+    "tile_id": "img100",
+    "full_id": "AOI_3_Paris_img100",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img100.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img100.geojson",
+    "mask_path": "data/masks/img100.png",
+    "building_count": 27,
+    "building_pixels": 41572,
+    "density_pct": 9.84,
+    "bounds": [
+      2.20922639996,
+      49.0231359,
+      2.21098139996,
+      49.0248909
+    ],
+    "crs": "EPSG:4326",
+    "leakage_audit": "ORIGINAL_TRAIN_POOL"
+  },
+  {
+    "tile_id": "img305",
+    "full_id": "AOI_3_Paris_img305",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img305.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img305.geojson",
+    "mask_path": "data/masks/img305.png",
+    "building_count": 67,
+    "building_pixels": 113642,
+    "density_pct": 26.9,
+    "bounds": [
+      2.23204139995,
+      49.0213809,
+      2.23379639995,
+      49.0231359
+    ],
+    "crs": "EPSG:4326",
+    "leakage_audit": "ORIGINAL_TRAIN_POOL"
+  },
+  {
+    "tile_id": "img516",
+    "full_id": "AOI_3_Paris_img516",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img516.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img516.geojson",
+    "mask_path": "data/masks/img516.png",
+    "building_count": 82,
+    "building_pixels": 98215,
+    "density_pct": 23.25,
+    "bounds": [
+      2.24432639995,
+      49.0073409,
+      2.24608139995,
+      49.0090959
+    ],
+    "crs": "EPSG:4326",
+    "leakage_audit": "ORIGINAL_TRAIN_POOL"
+  },
+  {
+    "tile_id": "img876",
+    "full_id": "AOI_3_Paris_img876",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img876.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img876.geojson",
+    "mask_path": "data/masks/img876.png",
+    "building_count": 62,
+    "building_pixels": 84853,
+    "density_pct": 20.08,
+    "bounds": [
+      2.25836639994,
+      49.0090959,
+      2.26012139994,
+      49.0108509
+    ],
+    "crs": "EPSG:4326",
+    "leakage_audit": "ORIGINAL_TRAIN_POOL"
+  },
+  {
+    "tile_id": "img1402",
+    "full_id": "AOI_3_Paris_img1402",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img1402.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img1402.geojson",
+    "mask_path": "data/masks/img1402.png",
+    "building_count": 66,
+    "building_pixels": 98654,
+    "density_pct": 23.35,
+    "bounds": [
+      2.27942639993,
+      48.9845259,
+      2.28118139993,
+      48.9862809
+    ],
+    "crs": "EPSG:4326",
+    "leakage_audit": "ORIGINAL_TRAIN_POOL"
+  },
+  {
+    "tile_id": "img741",
+    "full_id": "AOI_3_Paris_img741",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img741.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img741.geojson",
+    "mask_path": "data/masks/img741.png",
+    "building_count": 67,
+    "building_pixels": 87464,
+    "density_pct": 20.7,
+    "bounds": [
+      2.25310139994,
+      49.0090959,
+      2.25485639994,
+      49.0108509
+    ],
+    "crs": "EPSG:4326",
+    "leakage_audit": "ORIGINAL_TRAIN_POOL"
+  },
+  {
+    "tile_id": "img136",
+    "full_id": "AOI_3_Paris_img136",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img136.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img136.geojson",
+    "mask_path": "data/masks/img136.png",
+    "building_count": 66,
+    "building_pixels": 69941,
+    "density_pct": 16.55,
+    "bounds": [
+      2.21449139996,
+      49.0213809,
+      2.21624639996,
+      49.0231359
+    ],
+    "crs": "EPSG:4326",
+    "leakage_audit": "ORIGINAL_TRAIN_POOL"
+  },
+  {
+    "tile_id": "img697",
+    "full_id": "AOI_3_Paris_img697",
+    "image_path": "data/images/SN2_buildings_train_AOI_3_Paris_PS-RGB_img697.tif",
+    "geojson_path": "data/geojson/SN2_buildings_train_AOI_3_Paris_geojson_buildings_img697.geojson",
+    "mask_path": "data/masks/img697.png",
+    "building_count": 64,
+    "building_pixels": 76583,
+    "density_pct": 18.13,
+    "bounds": [
+      2.25134639994,
+      49.0108509,
+      2.25310139994,
+      49.0126059
+    ],
+    "crs": "EPSG:4326",
     "leakage_audit": "ORIGINAL_TRAIN_POOL"
   }
 ]

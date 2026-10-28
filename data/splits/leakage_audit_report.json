@@ -1,5 +1,8 @@
 {
-  "status": "ZERO_LEAKAGE_VERIFIED",
+  "status": "LOCAL_SPLITS_DISJOINT",
+  "local_splits_disjoint": true,
+  "pretrained_checkpoint_independence": "unverified_limitation",
+  "audit_notes": "Local train, val, and test partitions share strictly 0 overlapping tile IDs. Pretrained Hugging Face checkpoint training data independence on Paris holdout tiles cannot be mathematically guaranteed and is recorded as a documented limitation.",
   "random_state": 42,
   "counts": {
     "train": 15,
@@ -8,42 +11,62 @@
     "total": 31
   },
   "building_counts": {
-    "train": 997,
-    "val": 413,
+    "train": 964,
+    "val": 411,
     "test": 653,
-    "total": 2063
+    "total": 2028
   },
   "building_pixels": {
-    "train": 1333907,
-    "val": 568499,
+    "train": 1323223,
+    "val": 534708,
     "test": 889922,
-    "total": 2792328
+    "total": 2747853
+  },
+  "spatial_adjacency": {
+    "adjacent_pairs": 3,
+    "pairs": [
+      {
+        "train_tile": "img735",
+        "test_tile": "img691",
+        "relation": "touches_or_intersects"
+      },
+      {
+        "train_tile": "img735",
+        "test_tile": "img781",
+        "relation": "touches_or_intersects"
+      },
+      {
+        "train_tile": "img516",
+        "test_tile": "img560",
+        "relation": "touches_or_intersects"
+      }
+    ]
   },
   "tile_ids": {
     "train": [
+      "AOI_3_Paris_img100",
+      "AOI_3_Paris_img1223",
+      "AOI_3_Paris_img1312",
       "AOI_3_Paris_img136",
       "AOI_3_Paris_img1402",
-      "AOI_3_Paris_img1404",
+      "AOI_3_Paris_img1456",
       "AOI_3_Paris_img280",
       "AOI_3_Paris_img305",
       "AOI_3_Paris_img516",
-      "AOI_3_Paris_img690",
       "AOI_3_Paris_img697",
       "AOI_3_Paris_img731",
       "AOI_3_Paris_img735",
       "AOI_3_Paris_img741",
       "AOI_3_Paris_img876",
-      "AOI_3_Paris_img914",
-      "AOI_3_Paris_img960",
-      "AOI_3_Paris_img961"
+      "AOI_3_Paris_img960"
     ],
     "val": [
-      "AOI_3_Paris_img1223",
-      "AOI_3_Paris_img1312",
-      "AOI_3_Paris_img1456",
+      "AOI_3_Paris_img1404",
       "AOI_3_Paris_img484",
+      "AOI_3_Paris_img690",
       "AOI_3_Paris_img785",
-      "AOI_3_Paris_img905"
+      "AOI_3_Paris_img905",
+      "AOI_3_Paris_img961"
     ],
     "test": [
       "AOI_3_Paris_img1400",

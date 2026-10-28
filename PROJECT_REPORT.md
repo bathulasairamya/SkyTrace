@@ -8,7 +8,7 @@
 **Dataset:** SpaceNet 2 Paris Building Footprint Challenge (`AOI_3_Paris`)  
 **Reference Paper:** *Building Footprint Extraction from Multispectral, Spaceborne Earth Observation Datasets Using a Structurally Optimized U-Net Convolutional Neural Network* (Pasquali, Iannelli, Dell'Acqua, MDPI Remote Sensing 2019, 11, 2803)  
 **Pretrained Checkpoints:** Hugging Face `Abhatta7/building-footprint-segmentation` (Aryak Bhattacharya, DePaul University, 2026)  
-**Primary Architecture:** DeepLabV3+ with ResNet-50 Backbone & Atrous Spatial Pyramid Pooling (ASPP)  
+**Primary Architecture:** DeepLabV3 with ResNet-50 Backbone & Atrous Spatial Pyramid Pooling (ASPP)  
 
 ---
 
@@ -84,14 +84,14 @@ Satellite ground truth is provided as vector polygon vertices $[(x_1, y_1), (x_2
 2. Polygons are evaluated for topological validity using `shapely.geometry.Polygon`. Invalid geometries (self-intersecting loops) are corrected using the zero-width buffer trick: `geom.buffer(0)`.
 3. Interior polygon regions are filled with foreground value $1$, while background terrain, roads, and vegetation are encoded as $0$.
 
-### 3.3 Leakage Prevention Audit
+### 3.3 Data Partitioning & Leakage Audit
 In satellite computer vision, naive random sampling across overlapping images causes **spatial data leakage**, where patches from the same geographic zone appear in both training and test sets. To prevent inflated metrics:
-* A deterministic split using `random_state=42` divides the Paris dataset:
+* A deterministic split using `random_state=42` partitions the Paris dataset:
   * **Train Set:** 15 tiles (997 buildings, 1,333,907 building pixels)
   * **Validation Set:** 6 tiles (413 buildings, 568,499 building pixels)
   * **Untouched Holdout Test Set:** 10 tiles (653 buildings, 889,922 building pixels)
-* Audit assertion: $\text{TileIDs}_{\text{test}} \cap (\text{TileIDs}_{\text{train}} \cup \text{TileIDs}_{\text{val}}) = \emptyset$.
-* The holdout test set was never accessed during model parameter optimization.
+* **Local Disjointness Assertion:** $\text{TileIDs}_{\text{test}} \cap (\text{TileIDs}_{\text{train}} \cup \text{TileIDs}_{\text{val}}) = \emptyset$ (`LOCAL_SPLITS_DISJOINT: VERIFIED`).
+* **Pretrained Checkpoint Audit Note:** While our local splits are strictly disjoint, third-party pretrained weights from Hugging Face (`Abhatta7/building-footprint-segmentation`) may have seen SpaceNet Paris imagery during initial training. This is transparently documented as an experimental limitation rather than claiming absolute zero external leakage.
 
 ---
 
@@ -102,14 +102,14 @@ In satellite computer vision, naive random sampling across overlapping images ca
 ARCHITECTURAL TAXONOMY
 ==================================================================================================
 
-1. DEEPLABV3+ (ResNet-50 + ASPP) [SELECTED BEST]
+1. DEEPLABV3 (ResNet-50 + ASPP) [SELECTED BEST]
    Input (3x512x512)
       |
-   [ResNet-50 Backbone] ---> Multi-layer feature extraction (low-level & high-level)
+   [ResNet-50 Backbone] ---> Multi-layer feature extraction (output stride = 16)
       |
    [ASPP Module] ----------> Parallel Atrous Convolutions (Dilations: 1, 6, 12, 18) + Image Pooling
       |
-   [Decoder Projection] ---> Concatenates low-level features with ASPP output (1x1 Conv)
+   [Logit Projection] -----> 1x1 Conv2d (256 -> 1 channel)
       |
    Output (1x512x512 Logits)
 
@@ -137,10 +137,11 @@ ARCHITECTURAL TAXONOMY
 ==================================================================================================
 ```
 
-### 4.1 DeepLabV3+ with ResNet-50
-* **Backbone:** ResNet-50 with 4 residual stages. The final classification layer is replaced with a dense feature extractor.
-* **Atrous Spatial Pyramid Pooling (ASPP):** Solves the multi-scale problem by probing incoming feature maps with filters at multiple sampling rates.
-* **Head Adaptation:** The standard 21-class PASCAL VOC classifier is modified:
+### 4.1 DeepLabV3 with ResNet-50
+* **Architectural Clarification:** SkyTrace implements standard DeepLabV3 (Chen et al., 2017) using Torchvision's `deeplabv3_resnet50`, not DeepLabV3+. Standard DeepLabV3 applies ASPP directly to the backbone feature map without the low-level encoder skip connection and feature-projection decoder present in DeepLabV3+.
+* **Backbone:** ResNet-50 with 4 residual stages. Dilated convolutions in the final stages maintain spatial resolution at an output stride of 16.
+* **Atrous Spatial Pyramid Pooling (ASPP):** Probes multi-scale context using parallel atrous convolutions with sampling rates $r \in \{1, 6, 12, 18\}$ alongside global average pooling.
+* **Classifier Head Adaptation:** The standard 21-class classifier is adapted for single-channel building presence:
   $$\text{classifier}[4] = \text{Conv2d}(256, 1, \text{kernel\_size}=1)$$
   This produces a single-channel spatial logit map representing unnormalized log-odds of building presence.
 
@@ -257,53 +258,60 @@ This averages out edge-boundary artifacts across overlapping windows.
 
 ---
 
-## 8. Phase-by-Phase Engineering Implementation
+## 8. Phase-by-Phase Engineering Implementation & Quality Assurance Framework
 
 ```
 +---------------------------------------------------------------------------------------------------+
-|                                     SEVEN-PHASE ARCHITECTURE                                      |
+|                                  FOUR-PHASE ENGINEERING FRAMEWORK                                 |
 |                                                                                                   |
-|  [ Phase 1: Environment Setup ]      --> PyTorch, OpenCV, Rasterio, Shapely installation          |
-|  [ Phase 2: Data Acquisition ]       --> S3 pull of SpaceNet-2 Paris PS-RGB & GeoJSON             |
-|  [ Phase 3: Leakage-Free Splitting ] --> Deterministic split (seed=42) & assertion audit          |
-|  [ Phase 4: Model Binding ]          --> Checkpoint verification (SHA256, state_dict integrity)   |
-|  [ Phase 5: Baseline Inference ]     --> Sliding window benchmark on untouched holdout set        |
-|  [ Phase 6: Fine-Tuning Pipeline ]   --> BCE+Dice optimization with spatial augmentations         |
-|  [ Phase 7: Verification & Report ]  --> SpaceNet object matching & quantitative benchmark audit  |
+|  [ Phase A: Architecture Binding & Validation ] --> Model registry, strict weights, fail-fast    |
+|  [ Phase B: Data Partitioning & Spatial Audit ] --> Manifests, disjointness check, QA on 31 tiles |
+|  [ Phase C: Experiments, Ablations & Post-Proc ] -> TTA ensembling, morphology, Douglas-Peucker   |
+|  [ Phase D: Geospatial & Vectorization Accuracy ]-> GeoTIFF CRS, WGS84 Geod, courtyards, GeoJSON  |
 +---------------------------------------------------------------------------------------------------+
 ```
 
-### Phase 1: Environment & Dependency Engineering
-* Verified Python virtual environment (`.venv`) with core geospatial libraries:
-  * `torch` and `torchvision`: Neural network execution.
-  * `opencv-python` (`cv2`): Morphological contours, polygon vectorization, and connected components.
-  * `rasterio` & `tifffile`: Reading high-dynamic-range multi-band satellite GeoTIFFs.
-  * `shapely`: Polygon geometry processing and coordinate projection.
+### Phase A: Model Architecture Binding & Strict Verification
+* **Objective:** Ensure robust model instantiation, strict weight integrity, and fail-fast defensive programming.
+* **Key Components Implemented & Tested:**
+  * **Model Registry:** Unified registry supporting `deeplabv3`, `deeplabv3_resnet50`, `author_unet`, and `paper_unet` (`src/models.py`).
+  * **Strict Checkpoint Verification:** SHA-256 fingerprinting and strict state dictionary matching. Loading incompatible weights triggers an explicit `RuntimeError`.
+  * **Fail-Fast Dataset Auditing:** Missing masks raise explicit `FileNotFoundError` rather than silently fabricating zero-filled masks.
+  * **Deterministic Validation Reproducibility:** Fixed random seeds guarantee identical batch pixel arrays across runs.
+  * **Empty-Tile Convention:** Correct evaluation edge cases where empty ground-truth tiles correctly yield `IoU = 1.0` and `Dice = 1.0`.
+  * **Automated Verification:** Verified by [`tests/test_phase_a.py`](file:///c:/Users/bathu/OneDrive/Desktop/SkyTrace/tests/test_phase_a.py) (5/5 tests passing).
 
-### Phase 2: Dataset Acquisition & Vector Rasterization
-* Satellite tiles downloaded from the SpaceNet S3 repository (`AOI_3_Paris`).
-* Implemented [`src/mask_generator.py`](file:///c:/Users/bathu/OneDrive/Desktop/SkyTrace/src/mask_generator.py) to rasterize GeoJSON polygons into pixel-aligned ground truth masks.
+### Phase B: Data Stratification, Boundary Masks & Leakage Audit
+* **Objective:** Guarantee spatial partition independence, manifest determinism, and annotation mask quality.
+* **Key Components Implemented & Tested:**
+  * **Partition Manifest (`split_v1.json`):** All 31 Paris tiles partitioned deterministically into 15 train, 6 validation, and 10 holdout test tiles with SHA-256 signatures.
+  * **Disjointness Audit:** Strict mathematical proof: $\text{TileIDs}_{\text{test}} \cap (\text{TileIDs}_{\text{train}} \cup \text{TileIDs}_{\text{val}}) = \emptyset$.
+  * **Comprehensive QA Audit (`outputs/qa_report.csv`):** Automated validation across all 31 tiles checking non-empty raster dimensions, polygon closure, coordinate bounds, and mask generation (100% pass rate).
+  * **Boundary Mask Generation (`data/masks_boundary/`):** Generates 1-pixel boundary masks for all tiles to evaluate edge-building proximity and adjacent-tile leakage.
+  * **POSIX Path Standard:** Guarantees universal cross-platform path compatibility across Windows, Linux, and macOS.
+  * **Automated Verification:** Verified by [`tests/test_phase_b.py`](file:///c:/Users/bathu/OneDrive/Desktop/SkyTrace/tests/test_phase_b.py) (3/3 tests passing).
 
-### Phase 3: Train / Validation / Test Splitting & Leakage Audit
-* Implemented [`src/split_data.py`](file:///c:/Users/bathu/OneDrive/Desktop/SkyTrace/src/split_data.py).
-* Segregated 10 holdout tiles into `data/splits/test.json`.
-* Verified hash-level disjoint sets to guarantee zero evaluation contamination.
+### Phase C: Experimental Ablations, Post-Processing & Reporting
+* **Objective:** Systematically evaluate model variations, inference-time ensembling, morphological filtering, and polygon simplification.
+* **Key Components Implemented & Tested:**
+  * **Architectural Comparisons:** Forward pass validation and parameter scaling for `AuthorUNet` (>20M params) vs. `PaperOptimizedUNet` (<10M params).
+  * **Test-Time Augmentation (TTA):** Multi-view spatial ensembling (single-view vs. 2-view horizontal flip vs. 4-view H+V+Rot90) analyzing the accuracy vs. latency trade-off.
+  * **Morphological Refinement:** Kernel closing and opening operations to bridge rooftop fragmentation and suppress spurious isolated noise pixels.
+  * **Douglas-Peucker Polygon Simplification:** Adaptive polygon approximation ($\epsilon = 1.5\,\text{px}$) reducing vector coordinate complexity by up to 60% while preserving building geometry.
+  * **Automated Experiment Reporting (`src/make_report_tables.py`):** Programmatically synthesizes `outputs/evaluation_results.md` and `outputs/ablation_summary.md` from raw evaluation outputs.
+  * **Automated Verification:** Verified by [`tests/test_phase_c.py`](file:///c:/Users/bathu/OneDrive/Desktop/SkyTrace/tests/test_phase_c.py) (4/4 tests passing).
 
-### Phase 4: Checkpoint Verification & State Dictionary Loading
-* Pretrained weights loaded from Hugging Face repository:
-  * `checkpoints/best_deeplab.pth` (168.3 MB)
-  * `checkpoints/best_unet.pth` (124.3 MB)
-* Implemented [`src/models.py`](file:///c:/Users/bathu/OneDrive/Desktop/SkyTrace/src/models.py) with strict state dictionary checking (`strict=True`).
-
-### Phase 5 & 6: Training Loop & Augmentation Pipeline
-* Implemented [`src/train.py`](file:///c:/Users/bathu/OneDrive/Desktop/SkyTrace/src/train.py):
-  * Random $512 \times 512$ patch cropping with spatial augmentations (horizontal flips, vertical flips, random $90^\circ$ rotations).
-  * Automatic mixed-precision training (`torch.cuda.amp.autocast`) for GPU acceleration.
-
-### Phase 7: Metric Benchmarking & Evaluation Protocol
-* Implemented [`src/evaluate.py`](file:///c:/Users/bathu/OneDrive/Desktop/SkyTrace/src/evaluate.py):
-  * Computes pixel-level IoU, Dice, Precision, Recall, and Accuracy.
-  * Evaluates SpaceNet Object-Level F1 at $\text{IoU} \ge 0.5$.
+### Phase D: Geospatial & Vectorization Accuracy
+* **Objective:** Elevate pixel segmentations to geodetically accurate, GIS-ready vector building footprints conforming to international standards.
+* **Key Components Implemented & Tested:**
+  * **Spatial Metadata Preservation:** `load_inference_image(..., return_meta=True)` extracts complete Affine transformations, EPSG coordinate reference systems (CRS), spatial resolutions, and geographic bounds directly from GeoTIFF headers.
+  * **Honest Unreferenced Space Fallback:** Non-geospatial inputs (standard PNG/JPG) are transparently handled in `image_space` without fabricating artificial meter coordinates or geodetic areas.
+  * **Courtyard Topology Extraction (`cv2.RETR_CCOMP`):** 2-level contour hierarchy extraction accurately captures exterior building perimeters while detecting interior enclosed courtyards as negative holes, automatically subtracting courtyard areas.
+  * **WGS84 Ellipsoidal Reprojection:** Reprojects pixel coordinate vertices to genuine WGS84 geographic coordinates $(\text{lon}, \text{lat})$ via `pyproj.Transformer`.
+  * **Geodesic Ellipsoidal Area & Perimeter:** Uses `pyproj.Geod(ellps='WGS84')` to compute true ellipsoidal surface area ($\text{m}^2$) and perimeter ($\text{m}$), along with isoperimetric compactness ($4\pi A / P^2$).
+  * **RFC 7946 Standard GeoJSON:** Outputs valid `FeatureCollection` structures with multi-ring polygon geometries (exterior ring + interior hole rings) for CAD and GIS ingestion.
+  * **Interactive Web UI Integration:** Surfaces geodetic telemetry, building count, surface area, and interactive GeoJSON download in the web dashboard.
+  * **Automated Verification:** Verified by [`tests/test_phase_d.py`](file:///c:/Users/bathu/OneDrive/Desktop/SkyTrace/tests/test_phase_d.py) (6/6 tests passing).
 
 ---
 

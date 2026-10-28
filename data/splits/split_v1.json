@@ -1,0 +1,81 @@
+{
+  "manifest_version": "v1.0",
+  "created_at": "2026-10-27T16:42:16.364409",
+  "random_seed": 42,
+  "audit_status": "LOCAL_SPLITS_DISJOINT",
+  "pretrained_checkpoint_independence": "unverified_limitation",
+  "partition_counts": {
+    "train": 15,
+    "val": 6,
+    "test": 10,
+    "total": 31
+  },
+  "density_stratification": {
+    "train_mean_density_pct": 20.88,
+    "val_mean_density_pct": 21.09,
+    "test_mean_density_pct": 21.06
+  },
+  "spatial_adjacency_audit": {
+    "adjacent_pairs_count": 3,
+    "adjacent_pairs": [
+      {
+        "train_tile": "img735",
+        "test_tile": "img691",
+        "relation": "touches_or_intersects"
+      },
+      {
+        "train_tile": "img735",
+        "test_tile": "img781",
+        "relation": "touches_or_intersects"
+      },
+      {
+        "train_tile": "img516",
+        "test_tile": "img560",
+        "relation": "touches_or_intersects"
+      }
+    ],
+    "methodology_note": "Identified bounding-box adjacency between training tiles and holdout test tiles. Documented transparently to establish spatial awareness and edge-building leakage control."
+  },
+  "manifest_sha256": {
+    "train": "f7ba7e02511bef277fe8dcbe435c84890e8ba7c7d0e816cc137dedf125e8e807",
+    "val": "81f7fa310c922f806ae9dcdd16dcbe14d968d6cd48516aab6ed7a71f68c21db1",
+    "test": "2c24a13b4987add614d574c06422a9f5a9084b941b1497823069b3e0468c60a8"
+  },
+  "train_tile_ids": [
+    "img100",
+    "img1223",
+    "img1312",
+    "img136",
+    "img1402",
+    "img1456",
+    "img280",
+    "img305",
+    "img516",
+    "img697",
+    "img731",
+    "img735",
+    "img741",
+    "img876",
+    "img960"
+  ],
+  "val_tile_ids": [
+    "img1404",
+    "img484",
+    "img690",
+    "img785",
+    "img905",
+    "img961"
+  ],
+  "test_tile_ids": [
+    "img1400",
+    "img1684",
+    "img1730",
+    "img384",
+    "img449",
+    "img551",
+    "img560",
+    "img691",
+    "img699",
+    "img781"
+  ]
+}

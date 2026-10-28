@@ -7,14 +7,28 @@ Includes:
 """
 
 import os
+import hashlib
+import logging
 import torch
 import torch.nn as nn
 from torchvision.models.segmentation import deeplabv3_resnet50
 
+logger = logging.getLogger("SkyTrace.Models")
 
-class DeepLabV3Plus(nn.Module):
-    """DeepLabV3+ with ResNet-50 backbone.
-    Matches the exact architecture used to train checkpoints/best_deeplab.pth.
+
+class DeepLabV3ResNet50(nn.Module):
+    """DeepLabV3 with ResNet-50 backbone and Atrous Spatial Pyramid Pooling (ASPP).
+
+    Architecture Reference:
+        Chen et al., "Rethinking Atrous Convolution for Semantic Image Segmentation" (arXiv:1706.05587).
+        Backbone: ResNet-50 with dilated convolutions in stages 3 and 4 (output stride = 16 or 8).
+        Classifier: ASPP module with atrous rates (1, 6, 12, 18) + Image Pooling, followed by 1x1 conv.
+    
+    Architectural Clarification:
+        This class instantiates Torchvision's standard DeepLabV3 architecture, NOT DeepLabV3+.
+        Standard DeepLabV3 projects ASPP features directly to the output logits without the
+        low-level encoder skip connection and feature-projection decoder present in DeepLabV3+.
+        Matches the exact weights trained in checkpoints/best_deeplab.pth.
     """
     def __init__(self, pretrained_backbone: bool = False):
         super().__init__()
@@ -29,6 +43,10 @@ class DeepLabV3Plus(nn.Module):
     def forward(self, x):
         out = self.model(x)
         return out["out"]
+
+
+# Backward compatibility alias
+DeepLabV3Plus = DeepLabV3ResNet50
 
 
 class DoubleConv(nn.Module):
@@ -46,6 +64,15 @@ class DoubleConv(nn.Module):
 
     def forward(self, x):
         return self.conv(x)
+
+
+def _pad_cat(up: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
+    """Pad upsampled tensor to match skip connection spatial dimensions if needed."""
+    diff_y = skip.size()[2] - up.size()[2]
+    diff_x = skip.size()[3] - up.size()[3]
+    if diff_y != 0 or diff_x != 0:
+        up = nn.functional.pad(up, [diff_x // 2, diff_x - diff_x // 2, diff_y // 2, diff_y - diff_y // 2])
+    return torch.cat([up, skip], dim=1)
 
 
 class AuthorUNet(nn.Module):
@@ -88,10 +115,10 @@ class AuthorUNet(nn.Module):
 
         b = self.bottleneck(self.pool4(d4))
 
-        u4 = self.conv4(torch.cat([self.up4(b), d4], dim=1))
-        u3 = self.conv3(torch.cat([self.up3(u4), d3], dim=1))
-        u2 = self.conv2(torch.cat([self.up2(u3), d2], dim=1))
-        u1 = self.conv1(torch.cat([self.up1(u2), d1], dim=1))
+        u4 = self.conv4(_pad_cat(self.up4(b), d4))
+        u3 = self.conv3(_pad_cat(self.up3(u4), d3))
+        u2 = self.conv2(_pad_cat(self.up2(u3), d2))
+        u1 = self.conv1(_pad_cat(self.up1(u2), d1))
 
         return self.out(u1)
 
@@ -151,31 +178,92 @@ class PaperOptimizedUNet(nn.Module):
 
         b = self.b(self.p4(d4))
 
-        u4 = self.c4(torch.cat([self.up4(b), d4], dim=1))
-        u3 = self.c3(torch.cat([self.up3(u4), d3], dim=1))
-        u2 = self.c2(torch.cat([self.up2(u3), d2], dim=1))
-        u1 = self.c1(torch.cat([self.up1(u2), d1], dim=1))
+        u4 = self.c4(_pad_cat(self.up4(b), d4))
+        u3 = self.c3(_pad_cat(self.up3(u4), d3))
+        u2 = self.c2(_pad_cat(self.up2(u3), d2))
+        u1 = self.c1(_pad_cat(self.up1(u2), d1))
 
         return self.out(u1)
 
 
-def build_model(model_name: str = "deeplabv3", checkpoint_path: str = None, device: str = "cpu"):
-    """Factory function to build model and optionally load checkpoint with verification."""
-    model_name = model_name.lower()
-    if "deeplab" in model_name:
-        model = DeepLabV3Plus()
-    elif "author_unet" in model_name or "author" in model_name:
-        model = AuthorUNet()
-    elif "paper" in model_name or "unet" in model_name:
-        model = PaperOptimizedUNet()
-    else:
-        raise ValueError(f"Unknown model name: {model_name}")
+def compute_file_sha256(filepath: str) -> str:
+    """Calculate SHA-256 hash of a file for artifact verification."""
+    h = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        while chunk := f.read(8192):
+            h.update(chunk)
+    return h.hexdigest()
 
-    if checkpoint_path and os.path.exists(checkpoint_path):
-        state_dict = torch.load(checkpoint_path, map_location=device, weights_only=True)
-        # If wrapped in custom container or top-level keys
-        model.load_state_dict(state_dict, strict=False)
-        print(f"[ModelFactory] Loaded checkpoint '{checkpoint_path}' into {type(model).__name__}")
+
+MODEL_REGISTRY = {
+    "deeplabv3": DeepLabV3ResNet50,
+    "deeplabv3_r50": DeepLabV3ResNet50,
+    "deeplabv3_resnet50": DeepLabV3ResNet50,
+    "deeplabv3plus": DeepLabV3ResNet50,
+    "author_unet": AuthorUNet,
+    "unet": AuthorUNet,
+    "paper_unet": PaperOptimizedUNet,
+    "paper_optimized_unet": PaperOptimizedUNet,
+}
+
+
+def build_model(
+    model_name: str = "deeplabv3",
+    checkpoint_path: str = None,
+    device: str = "cpu",
+    allow_partial: bool = False,
+):
+    """Factory function to instantiate models with strict checkpoint validation and SHA-256 logging.
+
+    Args:
+        model_name: Architectural identifier in MODEL_REGISTRY.
+        checkpoint_path: Path to .pth / .pt weights file on disk.
+        device: Target execution device ('cpu', 'cuda', etc.).
+        allow_partial: If False, raises RuntimeError on unexpected or missing core weights.
+    """
+    key = model_name.lower().strip()
+    if key not in MODEL_REGISTRY:
+        valid_keys = ", ".join(MODEL_REGISTRY.keys())
+        raise KeyError(f"Unknown model name '{model_name}'. Choose from: {valid_keys}")
+
+    model_cls = MODEL_REGISTRY[key]
+    model = model_cls()
+
+    if checkpoint_path:
+        if not os.path.exists(checkpoint_path):
+            raise FileNotFoundError(f"Checkpoint not found at '{checkpoint_path}'")
+
+        sha256 = compute_file_sha256(checkpoint_path)
+        print(f"[ModelRegistry] Loading '{checkpoint_path}' (SHA-256: {sha256[:12]}...)")
+
+        raw_state = torch.load(checkpoint_path, map_location=device, weights_only=True)
+        # Handle wrapped training dictionaries
+        state_dict = raw_state.get("model_state_dict", raw_state)
+        # Strip DataParallel prefix if present
+        clean_state = {k.removeprefix("module."): v for k, v in state_dict.items()}
+
+        # Load weights
+        load_result = model.load_state_dict(clean_state, strict=False)
+
+        # Filter out documented benign auxiliary classifier keys from torchvision base
+        unexpected = [k for k in load_result.unexpected_keys if not k.startswith("model.aux_classifier")]
+        missing = load_result.missing_keys
+
+        if load_result.unexpected_keys:
+            aux_ignored = [k for k in load_result.unexpected_keys if k.startswith("model.aux_classifier")]
+            if aux_ignored:
+                print(f"[ModelRegistry] Note: Ignored {len(aux_ignored)} unused torchvision aux_classifier weights from checkpoint.")
+
+        if (missing or unexpected) and not allow_partial:
+            error_msg = (
+                f"Checkpoint parameter mismatch in {model_cls.__name__}!\n"
+                f"  Missing keys ({len(missing)}): {missing[:5]}\n"
+                f"  Unexpected keys ({len(unexpected)}): {unexpected[:5]}"
+            )
+            raise RuntimeError(error_msg)
+
+        total_params = sum(p.numel() for p in model.parameters())
+        print(f"[ModelRegistry] Verified and strictly loaded {model_cls.__name__} ({total_params/1e6:.2f}M parameters).")
 
     model.to(device)
     return model
@@ -186,11 +274,11 @@ if __name__ == "__main__":
     print(f"Testing models on device: {dev}")
     x = torch.randn(2, 3, 512, 512).to(dev)
 
-    dl = DeepLabV3Plus().to(dev)
-    print("DeepLabV3Plus output shape:", dl(x).shape)
+    dl = build_model("deeplabv3", device=dev)
+    print("DeepLabV3ResNet50 output shape:", dl(x).shape)
 
-    un = AuthorUNet().to(dev)
+    un = build_model("author_unet", device=dev)
     print("AuthorUNet output shape:", un(x).shape)
 
-    pn = PaperOptimizedUNet().to(dev)
+    pn = build_model("paper_unet", device=dev)
     print("PaperOptimizedUNet output shape:", pn(x).shape)

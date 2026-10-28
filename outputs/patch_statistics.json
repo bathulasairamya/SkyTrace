@@ -1,0 +1,12 @@
+{
+  "num_patches_sampled": 1000,
+  "patch_dimensions": "512x512",
+  "random_seed": 42,
+  "empty_patches_count": 0,
+  "empty_patches_pct": 0.0,
+  "mean_building_coverage_pct": 20.97,
+  "median_building_coverage_pct": 21.43,
+  "std_building_coverage_pct": 4.19,
+  "imbalance_ratio": "3.8 : 1",
+  "requires_foreground_sampling": false
+}

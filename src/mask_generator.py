@@ -9,24 +9,38 @@ from shapely.geometry import shape
 import cv2
 
 
-def geojson_to_mask(image_path: str, geojson_path: str) -> np.ndarray:
-    """Rasterize vector building polygons into a binary 2D mask matching the satellite image extent."""
+def geojson_to_mask(image_path: str, geojson_path: str, allow_empty: bool = True) -> np.ndarray:
+    """Rasterize vector building polygons into a binary 2D mask matching the satellite image extent.
+
+    Fails safely with explicit errors if annotations are missing or corrupt, preventing
+    silent substitution of all-zero background masks.
+    """
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f"Source raster not found at '{image_path}'")
+
     with rasterio.open(image_path) as src:
         height, width = src.height, src.width
         transform = src.transform
 
     if not os.path.exists(geojson_path):
-        return np.zeros((height, width), dtype=np.uint8)
+        raise FileNotFoundError(
+            f"Annotation GeoJSON missing at '{geojson_path}'. "
+            f"Cannot safely generate ground truth mask without verified annotation file."
+        )
 
     with open(geojson_path, "r", encoding="utf-8") as f:
         try:
             gj = json.load(f)
-        except Exception:
-            return np.zeros((height, width), dtype=np.uint8)
+        except json.JSONDecodeError as err:
+            raise ValueError(f"Corrupted GeoJSON file at '{geojson_path}': {err}")
 
     features = gj.get("features", [])
     if not features:
-        return np.zeros((height, width), dtype=np.uint8)
+        if allow_empty:
+            # Genuinely empty scene confirmed by verified annotation file
+            return np.zeros((height, width), dtype=np.uint8)
+        else:
+            raise ValueError(f"GeoJSON at '{geojson_path}' contains zero features.")
 
     shapes = []
     for feat in features:
@@ -34,7 +48,9 @@ def geojson_to_mask(image_path: str, geojson_path: str) -> np.ndarray:
         if geom and geom.get("coordinates"):
             try:
                 poly = shape(geom)
-                if poly.is_valid and not poly.is_empty:
+                if not poly.is_valid:
+                    poly = poly.buffer(0)
+                if not poly.is_empty:
                     shapes.append((poly, 1))
             except Exception:
                 continue
@@ -42,12 +58,14 @@ def geojson_to_mask(image_path: str, geojson_path: str) -> np.ndarray:
     if not shapes:
         return np.zeros((height, width), dtype=np.uint8)
 
+    # all_touched=False: standard remote sensing pixel center rule (does not inflate building boundaries)
     mask = rasterize(
         shapes,
         out_shape=(height, width),
         transform=transform,
         fill=0,
         dtype=np.uint8,
+        all_touched=False,
     )
     return mask
 

@@ -645,9 +645,11 @@
 
           // Update HUD
           document.getElementById('hudCount').innerText = data.telemetry.building_count;
-          document.getElementById('hudArea').innerHTML = data.telemetry.estimated_area_sqm.toLocaleString() + ' <span>m²</span>';
+          document.getElementById('hudArea').innerHTML = data.telemetry.is_georeferenced
+            ? ((data.telemetry.estimated_area_sqm != null ? data.telemetry.estimated_area_sqm.toLocaleString() : '0') + ' <span>m²</span>')
+            : (data.telemetry.building_pixels.toLocaleString() + ' <span>px</span>');
           document.getElementById('hudDensity').innerHTML = data.telemetry.coverage_pct + ' <span>%</span>';
-          document.getElementById('hudMaxConf').innerHTML = (data.telemetry.max_confidence || 0) + ' <span>%</span>';
+          document.getElementById('hudMaxConf').innerHTML = (data.telemetry.max_confidence || data.telemetry.mean_building_confidence || 0) + ' <span>%</span>';
           document.getElementById('hudResolution').innerText = data.telemetry.dimensions;
 
           // Update Images

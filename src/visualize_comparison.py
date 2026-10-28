@@ -3,8 +3,8 @@
 Compares:
 1. SpaceNet High-Resolution Satellite RGB Image
 2. Ground Truth Binary Mask (from GeoJSON)
-3. Pretrained Baseline DeepLabV3+ Prediction
-4. Fine-Tuned DeepLabV3+ Model Prediction
+3. Pretrained Baseline DeepLabV3 (ResNet-50) Prediction
+4. Fine-Tuned DeepLabV3 Model Prediction
 5. Detected Building Footprints Vector Contour Overlay
 """
 
@@ -54,14 +54,16 @@ def generate_comparison_panel(
     print(f"Generating visual comparison for tile: {sample_tile_id}...")
 
     # 1. Load satellite image
-    raw_rgb, norm_rgb = load_inference_image(img_path)
+    raw_rgb, norm_rgb, meta = load_inference_image(img_path)
     rgb_disp = (raw_rgb - raw_rgb.min()) / (raw_rgb.max() - raw_rgb.min() + 1e-8)
     rgb_disp = np.clip(rgb_disp, 0, 1)
 
-    # 2. Load ground truth mask
+    # 2. Load ground truth mask with strict verification
+    if not os.path.exists(mask_path):
+        raise FileNotFoundError(f"Missing ground truth mask for tile {sample_tile_id}: '{mask_path}'")
     gt_mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
     if gt_mask is None:
-        gt_mask = np.zeros((raw_rgb.shape[0], raw_rgb.shape[1]), dtype=np.uint8)
+        raise FileNotFoundError(f"Corrupt ground truth mask for tile {sample_tile_id}: '{mask_path}'")
 
     # 3. Predict with Baseline
     print("Running baseline model inference...")

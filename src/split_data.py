@@ -1,15 +1,20 @@
-"""Dataset Splitting & Data Leakage Prevention Audit."""
+"""Dataset Splitting, Spatial Neighborhood Adjacency Audit & Data Leakage Prevention."""
 
 import os
 import sys
+from pathlib import Path
 
 # Ensure repository root is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import csv
 import json
+import hashlib
+import datetime
 import cv2
 import numpy as np
+import rasterio
+from shapely.geometry import box
 from sklearn.model_selection import train_test_split
 
 
@@ -23,13 +28,21 @@ def load_master_author_split(solutions_csv: str = "data/solutions.csv"):
     return set(author_train), set(author_holdout)
 
 
-def get_tile_stats(mask_path: str, geojson_path: str):
-    """Compute exact building pixel count and building polygon count for a tile."""
+def get_tile_stats_and_bounds(image_path: str, mask_path: str, geojson_path: str):
+    """Compute building pixels, polygon count, density %, and geospatial bounding box."""
+    # Read bounding box from GeoTIFF
+    with rasterio.open(image_path) as src:
+        bounds = src.bounds
+        crs = str(src.crs)
+        bbox = box(*bounds)
+
     mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
     if mask is None:
-        return 0, 0, 0.0
-    building_pixels = int(np.sum(mask == 255))
-    density_pct = round((building_pixels / mask.size) * 100, 2)
+        building_pixels = 0
+        density_pct = 0.0
+    else:
+        building_pixels = int(np.sum(mask == 255))
+        density_pct = round((building_pixels / mask.size) * 100, 2)
 
     poly_count = 0
     if os.path.exists(geojson_path):
@@ -40,7 +53,13 @@ def get_tile_stats(mask_path: str, geojson_path: str):
         except Exception:
             poly_count = 0
 
-    return building_pixels, poly_count, density_pct
+    return building_pixels, poly_count, density_pct, bounds, bbox, crs
+
+
+def compute_manifest_sha256(data_list) -> str:
+    """Calculate deterministic SHA-256 hash of a partition list."""
+    serialized = json.dumps(data_list, sort_keys=True).encode("utf-8")
+    return hashlib.sha256(serialized).hexdigest()
 
 
 def create_reproducible_splits(
@@ -48,10 +67,10 @@ def create_reproducible_splits(
     geojson_dir: str = "data/geojson",
     mask_dir: str = "data/masks",
     output_dir: str = "data/splits",
-    val_ratio: float = 0.25,  # 5 val / 21 train pool
+    val_ratio: float = 0.25,  # 5 or 6 val from 21 pool
     random_state: int = 42,
 ):
-    """Partition dataset into verified train, val, and untouched test splits."""
+    """Partition dataset into verified train, val, and untouched test splits with spatial buffer audit."""
     os.makedirs(output_dir, exist_ok=True)
     author_train_set, author_holdout_set = load_master_author_split()
 
@@ -59,17 +78,20 @@ def create_reproducible_splits(
     train_pool_tiles = []
     test_pool_tiles = []
 
+    tile_boxes = {}
+
     for img_name in image_files:
         tile_suffix = img_name.replace(".tif", "").replace("SN2_buildings_train_AOI_3_Paris_PS-RGB_", "")
         full_id = f"AOI_3_Paris_{tile_suffix}"
         geo_name = f"SN2_buildings_train_AOI_3_Paris_geojson_buildings_{tile_suffix}.geojson"
         mask_name = f"{tile_suffix}.png"
 
-        img_path = os.path.join(image_dir, img_name)
-        geo_path = os.path.join(geojson_dir, geo_name)
-        mask_path = os.path.join(mask_dir, mask_name)
+        img_path = Path(image_dir, img_name).as_posix()
+        geo_path = Path(geojson_dir, geo_name).as_posix()
+        mask_path = Path(mask_dir, mask_name).as_posix()
 
-        b_pix, b_count, density = get_tile_stats(mask_path, geo_path)
+        b_pix, b_count, density, bounds, bbox, crs = get_tile_stats_and_bounds(img_path, mask_path, geo_path)
+        tile_boxes[tile_suffix] = bbox
 
         record = {
             "tile_id": tile_suffix,
@@ -80,6 +102,8 @@ def create_reproducible_splits(
             "building_count": b_count,
             "building_pixels": b_pix,
             "density_pct": density,
+            "bounds": [bounds.left, bounds.bottom, bounds.right, bounds.top],
+            "crs": crs,
         }
 
         if full_id in author_holdout_set:
@@ -91,13 +115,35 @@ def create_reproducible_splits(
         else:
             raise ValueError(f"Unknown tile ID {full_id} not found in master solution set!")
 
-    # Deterministic split of local train pool into Train (16) and Validation (5)
+    # Stratified Split of Train Pool by Building Density using pure NumPy
+    densities = [r["density_pct"] for r in train_pool_tiles]
+    q33, q67 = np.quantile(densities, [0.33, 0.67])
+    density_bins = [0 if d <= q33 else (1 if d <= q67 else 2) for d in densities]
+
     train_split, val_split = train_test_split(
-        train_pool_tiles, test_size=val_ratio, random_state=random_state
+        train_pool_tiles,
+        test_size=val_ratio,
+        random_state=random_state,
+        stratify=density_bins,
     )
     test_split = test_pool_tiles
 
-    # --- Strict Mathematical Leakage Assertions ---
+    # --- Spatial Neighborhood Adjacency Audit (B3) ---
+    adjacent_pairs = []
+    for tr in train_split:
+        tr_id = tr["tile_id"]
+        tr_box = tile_boxes[tr_id]
+        for te in test_split:
+            te_id = te["tile_id"]
+            te_box = tile_boxes[te_id]
+            if tr_box.intersects(te_box) or tr_box.touches(te_box):
+                adjacent_pairs.append({
+                    "train_tile": tr_id,
+                    "test_tile": te_id,
+                    "relation": "touches_or_intersects",
+                })
+
+    # --- Strict Mathematical Disjointness Assertions ---
     train_ids = set(r["full_id"] for r in train_split)
     val_ids = set(r["full_id"] for r in val_split)
     test_ids = set(r["full_id"] for r in test_split)
@@ -105,29 +151,73 @@ def create_reproducible_splits(
     assert train_ids.isdisjoint(test_ids), "CRITICAL: Train and Test partitions overlap!"
     assert val_ids.isdisjoint(test_ids), "CRITICAL: Validation and Test partitions overlap!"
     assert train_ids.isdisjoint(val_ids), "CRITICAL: Train and Validation partitions overlap!"
-    assert test_ids.issubset(author_holdout_set), "CRITICAL: Test partition contains training tiles from checkpoint!"
-    assert test_ids.isdisjoint(author_train_set), "CRITICAL: Test partition leaked into checkpoint training data!"
 
-    # Save splits to JSON
-    with open(os.path.join(output_dir, "train.json"), "w", encoding="utf-8") as f:
+    # Save individual split manifests with POSIX paths
+    train_path = Path(output_dir, "train.json").as_posix()
+    val_path = Path(output_dir, "val.json").as_posix()
+    test_path = Path(output_dir, "test.json").as_posix()
+
+    with open(train_path, "w", encoding="utf-8") as f:
         json.dump(train_split, f, indent=2)
 
-    with open(os.path.join(output_dir, "val.json"), "w", encoding="utf-8") as f:
+    with open(val_path, "w", encoding="utf-8") as f:
         json.dump(val_split, f, indent=2)
 
-    with open(os.path.join(output_dir, "test.json"), "w", encoding="utf-8") as f:
+    with open(test_path, "w", encoding="utf-8") as f:
         json.dump(test_split, f, indent=2)
 
-    # Save summary report
-    summary = {
-        "status": "ZERO_LEAKAGE_VERIFIED",
-        "random_state": random_state,
-        "counts": {
+    # Master Consolidated Manifest: split_v1.json (B4)
+    master_manifest = {
+        "manifest_version": "v1.0",
+        "created_at": datetime.datetime.now().isoformat(),
+        "random_seed": random_state,
+        "audit_status": "LOCAL_SPLITS_DISJOINT",
+        "pretrained_checkpoint_independence": "unverified_limitation",
+        "partition_counts": {
             "train": len(train_split),
             "val": len(val_split),
             "test": len(test_split),
-            "total": len(train_split) + len(val_split) + len(test_split),
+            "total": len(image_files),
         },
+        "density_stratification": {
+            "train_mean_density_pct": round(float(np.mean([r["density_pct"] for r in train_split])), 2),
+            "val_mean_density_pct": round(float(np.mean([r["density_pct"] for r in val_split])), 2),
+            "test_mean_density_pct": round(float(np.mean([r["density_pct"] for r in test_split])), 2),
+        },
+        "spatial_adjacency_audit": {
+            "adjacent_pairs_count": len(adjacent_pairs),
+            "adjacent_pairs": adjacent_pairs,
+            "methodology_note": (
+                "Identified bounding-box adjacency between training tiles and holdout test tiles. "
+                "Documented transparently to establish spatial awareness and edge-building leakage control."
+            ),
+        },
+        "manifest_sha256": {
+            "train": compute_manifest_sha256(train_split),
+            "val": compute_manifest_sha256(val_split),
+            "test": compute_manifest_sha256(test_split),
+        },
+        "train_tile_ids": sorted([r["tile_id"] for r in train_split]),
+        "val_tile_ids": sorted([r["tile_id"] for r in val_split]),
+        "test_tile_ids": sorted([r["tile_id"] for r in test_split]),
+    }
+
+    v1_path = Path(output_dir, "split_v1.json").as_posix()
+    with open(v1_path, "w", encoding="utf-8") as f:
+        json.dump(master_manifest, f, indent=2)
+
+    # Update summary report
+    summary = {
+        "status": "LOCAL_SPLITS_DISJOINT",
+        "local_splits_disjoint": True,
+        "pretrained_checkpoint_independence": "unverified_limitation",
+        "audit_notes": (
+            "Local train, val, and test partitions share strictly 0 overlapping tile IDs. "
+            "Pretrained Hugging Face checkpoint training data independence on Paris holdout tiles "
+            "cannot be mathematically guaranteed and is recorded as a documented limitation."
+        ),
+        "random_state": random_state,
+        "counts": master_manifest["partition_counts"],
         "building_counts": {
             "train": sum(r["building_count"] for r in train_split),
             "val": sum(r["building_count"] for r in val_split),
@@ -140,6 +230,10 @@ def create_reproducible_splits(
             "test": sum(r["building_pixels"] for r in test_split),
             "total": sum(r["building_pixels"] for r in train_split + val_split + test_split),
         },
+        "spatial_adjacency": {
+            "adjacent_pairs": len(adjacent_pairs),
+            "pairs": adjacent_pairs,
+        },
         "tile_ids": {
             "train": sorted(list(train_ids)),
             "val": sorted(list(val_ids)),
@@ -147,23 +241,24 @@ def create_reproducible_splits(
         },
     }
 
-    with open(os.path.join(output_dir, "leakage_audit_report.json"), "w", encoding="utf-8") as f:
+    with open(Path(output_dir, "leakage_audit_report.json").as_posix(), "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
 
     print("=" * 70)
     print("           DATASET PARTITION & DATA LEAKAGE AUDIT REPORT           ")
     print("=" * 70)
-    print(f"Train Split:      {len(train_split):2d} tiles | {summary['building_counts']['train']:4d} buildings | {summary['building_pixels']['train']:,} building pixels")
-    print(f"Validation Split: {len(val_split):2d} tiles | {summary['building_counts']['val']:4d} buildings | {summary['building_pixels']['val']:,} building pixels")
-    print(f"Test Split:       {len(test_split):2d} tiles | {summary['building_counts']['test']:4d} buildings | {summary['building_pixels']['test']:,} building pixels")
+    print(f"Train Split:      {len(train_split):2d} tiles | {summary['building_counts']['train']:4d} buildings | Mean Density: {master_manifest['density_stratification']['train_mean_density_pct']}%")
+    print(f"Validation Split: {len(val_split):2d} tiles | {summary['building_counts']['val']:4d} buildings | Mean Density: {master_manifest['density_stratification']['val_mean_density_pct']}%")
+    print(f"Test Split:       {len(test_split):2d} tiles | {summary['building_counts']['test']:4d} buildings | Mean Density: {master_manifest['density_stratification']['test_mean_density_pct']}%")
     print("-" * 70)
     print(f"Total:            {summary['counts']['total']:2d} tiles | {summary['building_counts']['total']:4d} buildings | {summary['building_pixels']['total']:,} building pixels")
-    print("\nLEAKAGE VERIFICATION AUDIT:")
-    print("  [x] Train vs Test overlap:        0 (Disjoint)")
-    print("  [x] Val vs Test overlap:          0 (Disjoint)")
-    print("  [x] Train vs Val overlap:         0 (Disjoint)")
-    print("  [x] Pretrained Checkpoint Seen:   0 of 10 Test Tiles (100% Unseen Holdout)")
-    print("  [x] Audit Status:                 MATHEMATICALLY VERIFIED ZERO LEAKAGE")
+    print("\nLEAKAGE & SPATIAL VERIFICATION AUDIT:")
+    print("  [x] Train vs Test ID overlap:     0 (Strictly Disjoint)")
+    print("  [x] Val vs Test ID overlap:       0 (Strictly Disjoint)")
+    print("  [x] Train vs Val ID overlap:      0 (Strictly Disjoint)")
+    print(f"  [x] Spatial Adjacency Pairs:      {len(adjacent_pairs)} documented boundary touches")
+    print("  [x] Master Manifest:              data/splits/split_v1.json (SHA-256 hashed)")
+    print("  [x] Audit Status:                 LOCAL_SPLITS_DISJOINT: VERIFIED")
     print("=" * 70)
 
     return summary
@@ -171,3 +266,4 @@ def create_reproducible_splits(
 
 if __name__ == "__main__":
     create_reproducible_splits()
+

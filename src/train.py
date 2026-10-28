@@ -16,6 +16,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 import argparse
 import json
+import math
+import random
 import time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,6 +31,19 @@ from src.dataset import get_dataloaders
 from src.metrics import BCEDiceLoss, compute_metrics
 
 
+def seed_everything(seed: int = 42):
+    """Enforce strict determinism across Python, NumPy, and PyTorch (CPU and CUDA)."""
+    random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
 def train_model(
     model_type: str = "deeplabv3",
     checkpoint_path: str = "checkpoints/best_deeplab.pth",
@@ -39,7 +54,9 @@ def train_model(
     patch_size: int = 512,
     device_name: str = "auto",
     use_amp: bool = True,
+    seed: int = 42,
 ):
+    seed_everything(seed)
     os.makedirs("checkpoints", exist_ok=True)
     os.makedirs("logs", exist_ok=True)
 
@@ -51,6 +68,7 @@ def train_model(
 
     print("=" * 65)
     print(f"       STARTING TRAINING PIPELINE ON: {device.type.upper()}       ")
+    print(f"  Random Seed:       {seed} (strict determinism enforced)")
     print("=" * 65)
 
     if device.type == "cuda":
@@ -62,19 +80,20 @@ def train_model(
         scaler = None
         print("  Running on CPU. Batch size 2, patch size 512.")
 
-    # 2. Build Model & Load Checkpoint
+    # 2. Build Model & Strictly Load Checkpoint
     model = build_model(model_name=model_type, checkpoint_path=checkpoint_path, device=device)
 
-    # 3. DataLoaders
+    # 3. DataLoaders with seeded worker init
     train_loader, val_loader = get_dataloaders(
         train_json="data/splits/train.json",
         val_json="data/splits/val.json",
         batch_size=batch_size,
         patch_size=patch_size,
         num_workers=2 if device.type == "cuda" else 0,
+        seed=seed,
     )
     print(f"  Train Batches:     {len(train_loader)} (total {len(train_loader.dataset)} samples)")
-    print(f"  Val Batches:       {len(val_loader)} (total {len(val_loader.dataset)} samples)")
+    print(f"  Val Batches:       {len(val_loader)} (total {len(val_loader.dataset)} deterministic samples)")
 
     # 4. Optimizer, Loss & Scheduler
     criterion = BCEDiceLoss(bce_weight=0.5, dice_weight=0.5)
@@ -90,7 +109,7 @@ def train_model(
         "epoch_times": [],
     }
 
-    best_val_iou = 0.0
+    best_val_iou = -1.0
 
     # 5. Training Loop
     for epoch in range(1, epochs + 1):
@@ -123,7 +142,7 @@ def train_model(
 
         avg_train_loss = running_train_loss / len(train_loader)
 
-        # Validation Loop
+        # Deterministic Validation Loop
         model.eval()
         running_val_loss = 0.0
         val_metrics_list = []
@@ -147,6 +166,9 @@ def train_model(
         avg_val_dice = float(np.mean([m["dice"] for m in val_metrics_list]))
         epoch_sec = time.time() - t0
 
+        if math.isnan(avg_val_iou) or math.isnan(avg_val_loss):
+            raise RuntimeError(f"NaN metric encountered at Epoch {epoch}! Aborting training to prevent state corruption.")
+
         current_lr = optimizer.param_groups[0]["lr"]
         scheduler.step(avg_val_iou)
 
@@ -166,11 +188,33 @@ def train_model(
             f"Time: {epoch_sec:.1f}s"
         )
 
-        # Save Best Checkpoint
+        # Save Best Resumable Checkpoint
         if avg_val_iou > best_val_iou:
             best_val_iou = avg_val_iou
-            torch.save(model.state_dict(), output_checkpoint)
+            resumable_checkpoint = {
+                "epoch": epoch,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "scheduler_state_dict": scheduler.state_dict(),
+                "scaler_state_dict": scaler.state_dict() if scaler else None,
+                "best_val_iou": best_val_iou,
+                "seed": seed,
+                "model_type": model_type,
+                "config": {
+                    "lr": lr,
+                    "batch_size": batch_size,
+                    "patch_size": patch_size,
+                    "epochs": epochs,
+                },
+            }
+            torch.save(resumable_checkpoint, output_checkpoint)
+            # Save lightweight weights for inference
+            weights_only_path = output_checkpoint.replace(".pth", "_weights.pth")
+            torch.save(model.state_dict(), weights_only_path)
             print(f"  [*] Saved new best model checkpoint to {output_checkpoint} (Val IoU: {best_val_iou:.4f})")
+
+    # Safety assertion that a valid checkpoint was produced
+    assert os.path.exists(output_checkpoint), "Fatal: No checkpoint was saved during training!"
 
     # 6. Save Training Log & Plot
     with open("logs/training_log.json", "w", encoding="utf-8") as f:
@@ -219,6 +263,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=2)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--patch_size", type=int, default=512)
+    parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", type=str, default="auto", choices=["auto", "cuda", "cpu"])
     args = parser.parse_args()
 
@@ -231,4 +276,5 @@ if __name__ == "__main__":
         lr=args.lr,
         patch_size=args.patch_size,
         device_name=args.device,
+        seed=args.seed,
     )
